@@ -1,0 +1,17 @@
+- name: Ping my hosts
+  ansible.builtin.ping:
+
+- name: Set timezone
+  community.general.timezone:
+    name: America/Los_Angeles
+
+- name: Run apt-get upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
+
+- name: Install Tools
+  ansible.builtin.package:
+    name:
+      - curl
+      - wget

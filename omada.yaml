@@ -1,0 +1,41 @@
+- name: Omada playbook
+  hosts: omada
+  become: yes
+  become_method: sudo
+  tasks:
+    - import_tasks: base/lxc.yaml
+
+    - name: Add MongoDB apt-key
+      ansible.builtin.get_url:
+        url: "https://www.mongodb.org/static/pgp/server-4.4.asc"
+        dest: /etc/apt/trusted.gpg.d/mongodb-org.asc
+        mode: '0644'
+        force: true
+    - name: Add MongoDB repository
+      ansible.builtin.apt_repository:
+        repo: "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse"
+        state: present
+
+    - name: Install dependencies
+      ansible.builtin.package:
+        name:
+          - openjdk-8-jre
+          - mongodb-org
+        state: present
+    
+    - name: Enable MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+
+    - name: Install Omada Tools
+      ansible.builtin.package:
+        name:
+          - jsvc
+        state: present
+
+    - name: Install Omada
+      apt:
+        deb: "https://static.tp-link.com/upload/software/2023/202303/20230321/Omada_SDN_Controller_v5.9.31_Linux_x64.deb"
+      register: command_output

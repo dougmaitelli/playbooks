@@ -1,0 +1,96 @@
+- name: Graylog playbook
+  hosts: graylog
+  become: yes
+  become_method: sudo
+  tasks:
+    - import_tasks: base/lxc.yaml
+
+    - name: Install dependencies
+      ansible.builtin.package:
+        name:
+          - apt-transport-https
+          - openjdk-17-jre-headless
+          - uuid-runtime
+          - pwgen
+          - gnupg
+        state: present
+
+    - name: Add MongoDB apt-key
+      ansible.builtin.get_url:
+        url: "https://www.mongodb.org/static/pgp/server-6.0.asc"
+        dest: /etc/apt/trusted.gpg.d/mongodb-org.asc
+        mode: '0644'
+        force: true
+    - name: Add MongoDB repository
+      ansible.builtin.apt_repository:
+        repo: "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse"
+        state: present
+    - name: Install MongoDB
+      ansible.builtin.package:
+        name:
+          - mongodb-org
+        state: present
+    - name: Enable MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+
+    - name: Add OpenSearch apt-key
+      ansible.builtin.apt_key:
+        url: https://artifacts.opensearch.org/publickeys/opensearch.pgp
+        state: present  
+    - name: Add OpenSearch repository
+      ansible.builtin.apt_repository:
+        repo: "deb https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main"
+        state: present
+    - name: Install OpenSearch
+      ansible.builtin.package:
+        name:
+          - opensearch
+        state: present
+    - name: Add OpenSearch config to Graylog
+      ansible.builtin.blockinfile:
+        path: /etc/opensearch/opensearch.yml
+        create: true
+        block: |
+          cluster.name: graylog
+          node.name: ${HOSTNAME}
+          discovery.type: single-node
+          network.host: 0.0.0.0
+          action.auto_create_index: false
+          plugins.security.disabled: true
+    - name: Enable OpenSearch
+      ansible.builtin.systemd:
+        name: opensearch
+        state: started
+        enabled: yes
+
+    - name: Install Graylog repository
+      apt:
+        deb: "https://packages.graylog2.org/repo/packages/graylog-5.0-repository_latest.deb"
+      register: command_output
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+    - name: Install Graylog
+      ansible.builtin.package:
+        name:
+          - graylog-server
+        state: present
+    - name: Add Graylog configuration
+      ansible.builtin.blockinfile:
+        path: /etc/graylog/server/server.conf
+        block: |
+          http_bind_address = 0.0.0.0:9000
+          http_publish_uri = http://192.168.7.4:9000/
+          http_external_uri = https://graylog.digitalhades.dev/
+          trusted_proxies = 127.0.0.1/32, 0:0:0:0:0:0:0:1/128, 192.168.0.5/24, 192.168.7.5/24
+          password_secret = w0ReYTkKr7HdZDlp513i56tEKWfS6scHZNQfF2nNvVxvh62YD9Ltx3QE6mfds8QglaBoW0SQgCXr9pd1F1YyWj5YXAq2EYff
+          root_password_sha2 = 1a2dcb99f2eac0c5f5ef07ef74777c0a79e97ef4ee10e4601e35b3a48f1e2dfd
+    - name: Enable Graylog
+      ansible.builtin.systemd:
+        name: graylog-server
+        state: started
+        enabled: yes
+
