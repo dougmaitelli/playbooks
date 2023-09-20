@@ -37,5 +37,5 @@
 
     - name: Install Omada
       apt:
-        deb: "https://static.tp-link.com/upload/software/2023/202303/20230321/Omada_SDN_Controller_v5.9.31_Linux_x64.deb"
+        deb: "https://static.tp-link.com/upload/software/2023/202309/20230920/Omada_SDN_Controller_v5.12.7_Linux_x64.deb"
       register: command_output
