@@ -68,7 +68,7 @@
 
     - name: Install Graylog repository
       apt:
-        deb: "https://packages.graylog2.org/repo/packages/graylog-5.1-repository_latest.deb"
+        deb: "https://packages.graylog2.org/repo/packages/graylog-5.2-repository_latest.deb"
       register: command_output
     - name: Update apt cache
       ansible.builtin.apt:
