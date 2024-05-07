@@ -1,0 +1,6 @@
+- name: Rclone playbook
+  hosts: rclone
+  become: yes
+  become_method: sudo
+  tasks:
+    - import_tasks: base/lxc.yaml

@@ -1,0 +1,16 @@
+- name: OpenCanary playbook
+  hosts: canary
+  become: yes
+  become_method: sudo
+  roles:
+    - role: ansible-role-opencanary
+      vars:
+        opencanary_version: master
+        install_source: github
+        portscan_enabled: "true"
+        ftp_enabled: "true"
+        ssh_enabled: "true"
+        telnet_enabled: "true"
+        webhook_url: "ntfy.digitalhades.dev/alerts"
+  tasks:
+    - import_tasks: base/lxc.yaml
