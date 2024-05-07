@@ -1,0 +1,19 @@
+- name: Start opencanaryd
+  systemd:
+    name: opencanaryd
+    state: restarted
+
+- name: Stop opencanaryd
+  systemd:
+    name: opencanaryd
+    state: stopped
+
+- name: Restart rsyslogd
+  systemd:
+    name: rsyslog
+    state: restarted
+
+- name: Restart samba
+  systemd:
+    name: smbd
+    state: restarted

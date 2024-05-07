@@ -1,3 +1,0 @@
-[submodule "roles/ansible-role-opencanary"]
-	path = roles/ansible-role-opencanary
-	url = git@github.com:thinkst/ansible-role-opencanary.git
