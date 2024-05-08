@@ -14,3 +14,8 @@
         webhook_url: "ntfy.digitalhades.dev/alerts"
   tasks:
     - import_tasks: base/lxc.yaml
+
+    - name: Install Git
+      ansible.builtin.package:
+        name:
+          - git
