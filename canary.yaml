@@ -5,8 +5,7 @@
   roles:
     - role: ansible-role-opencanary
       vars:
-        opencanary_version: master
-        install_source: github
+        opencanary_version: 0.9.3
         portscan_enabled: "true"
         ftp_enabled: "true"
         ssh_enabled: "true"
