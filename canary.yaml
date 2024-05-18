@@ -92,8 +92,11 @@
                     "class": "opencanary.logger.WebhookHandler",
                     "url": "https://ntfy.digitalhades.dev/alerts",
                     "method": "POST",
-                    "data": '{"message": "%(message)s"}',
-                    "status_code": 200
+                    "data": "Honeypot Triggered:\n %(message)s",
+                    "status_code": 200,
+                    "headers": {
+                      "Authorization": "Bearer 123"
+                    }
                   }
                 }
               }
