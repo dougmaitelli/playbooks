@@ -104,12 +104,7 @@
     - name: Enable opencanaryd.service
       systemd:
         name: opencanaryd
+        state: started
         enabled: yes
         masked: no
         daemon_reload: yes
-      notify: Start opencanaryd
-
-    - name: Restart opencanaryd
-      command: echo restart opencanaryd
-      notify: Start opencanaryd
-      when: config.changed
