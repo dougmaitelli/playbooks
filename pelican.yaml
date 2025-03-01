@@ -1,0 +1,115 @@
+- name: Pelican playbook
+  hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - import_tasks: base/lxc.yaml
+    - name: Install PHP
+      ansible.builtin.apt:
+        pkg:
+          - php8.3
+          - php8.3-gd
+          - php8.3-mysql
+          - php8.3-mbstring
+          - php8.3-bcmath
+          - php8.3-xml
+          - php8.3-curl
+          - php8.3-zip
+          - php8.3-intl
+          - php8.3-sqlite3
+          - php8.3-fpm
+        state: present
+    - name: Create Directory
+      ansible.builtin.file:
+        path: /var/www/pelican
+        state: directory
+    - name: Extract Files
+      ansible.builtin.unarchive:
+        src: https://github.com/pelican-dev/panel/releases/latest/download/panel.tar.gz
+        dest: /var/www/pelican/
+        remote_src: true
+    - name: Install Composer 1
+      ansible.builtin.shell:
+        cmd: |
+          curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+        chdir: /var/www/pelican/
+    - name: Install Composer 2
+      ansible.builtin.shell:
+        cmd: |
+          sudo composer install --no-dev --optimize-autoloader
+        chdir: /var/www/pelican/
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        pkg: nginx
+        state: present
+    - name: Configure Nginx
+      copy:
+        dest: /etc/nginx/sites-available/pelican.conf
+        content: |
+          server {
+            listen 80;
+            server_name pelican.h4des.dev;
+
+            root /var/www/pelican/public;
+            index index.html index.htm index.php;
+            charset utf-8;
+
+            location / {
+              try_files $uri $uri/ /index.php?$query_string;
+            }
+
+            location = /favicon.ico { access_log off; log_not_found off; }
+            location = /robots.txt  { access_log off; log_not_found off; }
+
+            access_log off;
+            error_log  /var/log/nginx/pelican.app-error.log error;
+
+            # allow larger file uploads and longer script runtimes
+            client_max_body_size 100m;
+            client_body_timeout 120s;
+
+            sendfile off;
+
+            location ~ \.php$ {
+              fastcgi_split_path_info ^(.+\.php)(/.+)$;
+              fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+              fastcgi_index index.php;
+              include fastcgi_params;
+              fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
+              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              fastcgi_param HTTP_PROXY "";
+              fastcgi_intercept_errors off;
+              fastcgi_buffer_size 16k;
+              fastcgi_buffers 4 16k;
+              fastcgi_connect_timeout 300;
+              fastcgi_send_timeout 300;
+              fastcgi_read_timeout 300;
+            }
+
+            location ~ /\.ht {
+              deny all;
+            }
+          }
+    - name: Create a symbolic link
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/pelican.conf
+        dest: /etc/nginx/sites-enabled/pelican.conf
+        state: link
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+    - name: Install Pelican
+      ansible.builtin.shell:
+        cmd: |
+          php artisan p:environment:setup
+        chdir: /var/www/pelican/
+    - name: Update File Permissions
+      ansible.builtin.shell:
+        cmd: |
+          chmod -R 755 storage/* bootstrap/cache/
+        chdir: /var/www/pelican/
+    - name: Update Parent Folder Permissions
+      ansible.builtin.shell:
+        cmd: chown -R www-data:www-data /var/www/pelican
